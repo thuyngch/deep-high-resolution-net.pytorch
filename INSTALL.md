@@ -19,7 +19,15 @@ pip install numpy cython opencv-python tqdm scikit-image onnx pandas pylint shap
 pip install ipython jupyter jupyterlab
 pip install tensorflow tensorboard tensorboardX
 pip install torch torchvision
+python setup.py develop
 ipython kernel install --user --name=posehrnet
+```
+
+* Build libraries:
+```
+cd lib/
+make -j4
+cd ../
 ```
 
 * Config the VSCode remember the last commit message:
