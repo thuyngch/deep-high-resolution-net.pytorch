@@ -52,7 +52,7 @@ class COCODataset(JointsDataset):
         [7,9],[8,10],[9,11],[2,3],[1,2],[1,3],[2,4],[3,5],[4,6],[5,7]]
     '''
     def __init__(self, cfg, root, image_set, is_train, transform=None):
-        super().__init__(cfg, root, image_set, is_train, transform)
+        super(COCODataset, self).__init__(cfg, root, image_set, is_train, transform)
         self.nms_thre = cfg.TEST.NMS_THRE
         self.image_thre = cfg.TEST.IMAGE_THRE
         self.soft_nms = cfg.TEST.SOFT_NMS
@@ -68,10 +68,10 @@ class COCODataset(JointsDataset):
         self.coco = COCO(self._get_ann_file_keypoint())
 
         # deal with class names
-        cats = [cat['name']
-                for cat in self.coco.loadCats(self.coco.getCatIds())]
+        cats = [cat['name'] for cat in self.coco.loadCats(self.coco.getCatIds())]
         self.classes = ['__background__'] + cats
         logger.info('=> classes: {}'.format(self.classes))
+
         self.num_classes = len(self.classes)
         self._class_to_ind = dict(zip(self.classes, range(self.num_classes)))
         self._class_to_coco_ind = dict(zip(cats, self.coco.getCatIds()))
