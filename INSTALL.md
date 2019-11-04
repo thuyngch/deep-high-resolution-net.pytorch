@@ -9,7 +9,7 @@ workon posehrnet
 
 * Clone Git repository:
 ```
-git clone git@github.com:antiaegis/deep-high-resolution-net.pytorch.git
+git clone git@github.com:thuyngch/deep-high-resolution-net.pytorch.git
 cd deep-high-resolution-net.pytorch
 ```
 
