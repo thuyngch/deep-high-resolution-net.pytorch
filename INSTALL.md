@@ -15,7 +15,7 @@ cd deep-high-resolution-net.pytorch
 
 * Install required packages:
 ```
-pip install numpy cython opencv-python tqdm scikit-image onnx pandas pylint shapely scipy
+pip install numpy cython opencv-python tqdm scikit-image onnx pandas pylint shapely scipy yacs json_tricks
 pip install ipython jupyter jupyterlab
 pip install tensorflow tensorboard tensorboardX
 pip install torch torchvision

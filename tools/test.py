@@ -28,8 +28,8 @@ from lib.core.loss import JointsMSELoss
 from lib.core.function import validate
 from lib.utils.utils import create_logger
 
-import lib.dataset
-import lib.models
+import lib.dataset as dataset
+import lib.models as models
 
 
 def parse_args():
