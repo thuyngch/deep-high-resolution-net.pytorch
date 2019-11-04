@@ -30,6 +30,14 @@ make -j4
 cd ../
 ```
 
+* Install COCO API:
+```
+export COCOAPI="/home/cybercore/thuync/cocoapi"
+git clone https://github.com/cocodataset/cocoapi.git $COCOAPI
+cd $COCOAPI/PythonAPI
+make install
+```
+
 * Config the VSCode remember the last commit message:
 ```
 echo "update" > .mycommitmsg.txt
