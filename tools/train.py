@@ -33,8 +33,8 @@ from lib.utils.utils import save_checkpoint
 from lib.utils.utils import create_logger
 from lib.utils.utils import get_model_summary
 
-import lib.dataset
-import lib.models
+import lib.dataset as dataset
+import lib.models as models
 
 
 def parse_args():
@@ -105,10 +105,8 @@ def main():
         'valid_global_steps': 0,
     }
 
-    dump_input = torch.rand(
-        (1, 3, cfg.MODEL.IMAGE_SIZE[1], cfg.MODEL.IMAGE_SIZE[0])
-    )
-    writer_dict['writer'].add_graph(model, (dump_input, ))
+    dump_input = torch.rand((1, 3, cfg.MODEL.IMAGE_SIZE[1], cfg.MODEL.IMAGE_SIZE[0]))
+    # writer_dict['writer'].add_graph(model, (dump_input))
 
     logger.info(get_model_summary(model, dump_input))
 

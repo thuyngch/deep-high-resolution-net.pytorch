@@ -32,7 +32,7 @@ cd ../
 
 * Install COCO API:
 ```
-export COCOAPI="/home/cybercore/thuync/cocoapi"
+export COCOAPI=$HOME/thuync/cocoapi
 git clone https://github.com/cocodataset/cocoapi.git $COCOAPI
 cd $COCOAPI/PythonAPI
 make install
