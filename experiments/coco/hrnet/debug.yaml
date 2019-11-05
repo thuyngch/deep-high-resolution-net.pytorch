@@ -20,7 +20,7 @@ DATASET:
   ROOT: '/home/user/thuync/datasets/coco/'
   ROT_FACTOR: 45
   SCALE_FACTOR: 0.35
-  TEST_SET: 'val2017'
+  TEST_SET: 'train2017'
   TRAIN_SET: 'val2017'
 MODEL:
   INIT_WEIGHTS: true
