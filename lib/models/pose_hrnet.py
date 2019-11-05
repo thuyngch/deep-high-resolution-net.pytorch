@@ -25,6 +25,9 @@ def conv3x3(in_planes, out_planes, stride=1):
                      padding=1, bias=False)
 
 
+#------------------------------------------------------------------------------
+#  BasicBlock
+#------------------------------------------------------------------------------
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -57,6 +60,9 @@ class BasicBlock(nn.Module):
         return out
 
 
+#------------------------------------------------------------------------------
+#  Bottleneck
+#------------------------------------------------------------------------------
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -98,6 +104,9 @@ class Bottleneck(nn.Module):
         return out
 
 
+#------------------------------------------------------------------------------
+#  HighResolutionModule
+#------------------------------------------------------------------------------
 class HighResolutionModule(nn.Module):
     def __init__(self, num_branches, blocks, num_blocks, num_inchannels,
                  num_channels, fuse_method, multi_scale_output=True):
@@ -271,6 +280,9 @@ blocks_dict = {
 }
 
 
+#------------------------------------------------------------------------------
+#  PoseHighResolutionNet
+#------------------------------------------------------------------------------
 class PoseHighResolutionNet(nn.Module):
 
     def __init__(self, cfg, **kwargs):
