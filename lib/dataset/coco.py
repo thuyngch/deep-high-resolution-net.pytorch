@@ -165,6 +165,7 @@ class COCODataset(JointsDataset):
 			y1 = np.max((0, y))
 			x2 = np.min((width - 1, x1 + np.max((0, w - 1))))
 			y2 = np.min((height - 1, y1 + np.max((0, h - 1))))
+			# Check whether bbox is valid
 			if obj['area'] > 0 and x2 >= x1 and y2 >= y1:
 				obj['clean_bbox'] = [x1, y1, x2-x1, y2-y1]
 				valid_objs.append(obj)
@@ -173,6 +174,7 @@ class COCODataset(JointsDataset):
 		rec = []
 		for obj in objs:
 			cls = self._coco_ind_to_class_ind[obj['category_id']]
+			# Ensure object is person
 			if cls != 1:
 				continue
 
