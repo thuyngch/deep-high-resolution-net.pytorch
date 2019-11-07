@@ -119,13 +119,9 @@ class JointsDataset(Dataset):
 
         if self.data_format == 'zip':
             from utils import zipreader
-            data_numpy = zipreader.imread(
-                image_file, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION
-            )
+            data_numpy = zipreader.imread(image_file, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
         else:
-            data_numpy = cv2.imread(
-                image_file, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION
-            )
+            data_numpy = cv2.imread(image_file, cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
 
         if self.color_rgb:
             data_numpy = cv2.cvtColor(data_numpy, cv2.COLOR_BGR2RGB)
@@ -159,10 +155,7 @@ class JointsDataset(Dataset):
                 c[0] = data_numpy.shape[1] - c[0] - 1
 
         trans = get_affine_transform(c, s, r, self.image_size)
-        input = cv2.warpAffine(
-            data_numpy, trans,
-            (int(self.image_size[0]), int(self.image_size[1])),
-            flags=cv2.INTER_LINEAR)
+        input = cv2.warpAffine(data_numpy, trans, (int(self.image_size[0]), int(self.image_size[1])), flags=cv2.INTER_LINEAR)
 
         if self.transform:
             input = self.transform(input)
@@ -232,26 +225,21 @@ class JointsDataset(Dataset):
         target_weight = np.ones((self.num_joints, 1), dtype=np.float32)
         target_weight[:, 0] = joints_vis[:, 0]
 
-        assert self.target_type == 'gaussian', \
-            'Only support gaussian map now!'
+        assert self.target_type == 'gaussian', 'Only support gaussian map now!'
 
         if self.target_type == 'gaussian':
-            target = np.zeros((self.num_joints,
-                               self.heatmap_size[1],
-                               self.heatmap_size[0]),
-                              dtype=np.float32)
-
+            target = np.zeros((self.num_joints, self.heatmap_size[1], self.heatmap_size[0]), dtype=np.float32)
             tmp_size = self.sigma * 3
 
             for joint_id in range(self.num_joints):
                 feat_stride = self.image_size / self.heatmap_size
                 mu_x = int(joints[joint_id][0] / feat_stride[0] + 0.5)
                 mu_y = int(joints[joint_id][1] / feat_stride[1] + 0.5)
+
                 # Check that any part of the gaussian is in-bounds
                 ul = [int(mu_x - tmp_size), int(mu_y - tmp_size)]
                 br = [int(mu_x + tmp_size + 1), int(mu_y + tmp_size + 1)]
-                if ul[0] >= self.heatmap_size[0] or ul[1] >= self.heatmap_size[1] \
-                        or br[0] < 0 or br[1] < 0:
+                if (ul[0] >= self.heatmap_size[0]) or (ul[1] >= self.heatmap_size[1]) or (br[0] < 0) or (br[1] < 0):
                     # If not, just return the image as is
                     target_weight[joint_id] = 0
                     continue
@@ -273,8 +261,7 @@ class JointsDataset(Dataset):
 
                 v = target_weight[joint_id]
                 if v > 0.5:
-                    target[joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = \
-                        g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
+                    target[joint_id][img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
 
         if self.use_different_joints_weight:
             target_weight = np.multiply(target_weight, self.joints_weight)
