@@ -51,8 +51,8 @@ class COCODataset(JointsDataset):
 		[16,14],[14,12],[17,15],[15,13],[12,13],[6,12],[7,13], [6,7],[6,8],
 		[7,9],[8,10],[9,11],[2,3],[1,2],[1,3],[2,4],[3,5],[4,6],[5,7]]
 	'''
-	def __init__(self, cfg, root, image_set, is_train, transform=None):
-		super(COCODataset, self).__init__(cfg, root, image_set, is_train, transform)
+	def __init__(self, cfg, root, image_set, is_train, multi_person=False, transform=None):
+		super(COCODataset, self).__init__(cfg, root, image_set, is_train, multi_person, transform)
 		self.nms_thre = cfg.TEST.NMS_THRE
 		self.image_thre = cfg.TEST.IMAGE_THRE
 		self.soft_nms = cfg.TEST.SOFT_NMS
@@ -136,7 +136,12 @@ class COCODataset(JointsDataset):
 		""" ground truth bbox and keypoints """
 		gt_db = []
 		for index in self.image_set_index:
-			gt_db.extend(self._load_coco_keypoint_annotation_kernal(index))
+			if self.multi_person:
+				recs = self._load_coco_keypoint_annotation_kernal(index)
+				if len(recs)>0:
+					gt_db.append(recs)
+			else:
+				gt_db.extend(self._load_coco_keypoint_annotation_kernal(index))
 		return gt_db
 
 	def _load_coco_keypoint_annotation_kernal(self, index):
@@ -150,7 +155,8 @@ class COCODataset(JointsDataset):
 		:param index: coco image id
 		:return: db entry
 		"""
-		im_ann = self.coco.loadImgs(index)[0]
+		im_ann = self.coco.loadImgs(index)
+		im_ann = im_ann[0]
 		width = im_ann['width']
 		height = im_ann['height']
 
@@ -272,8 +278,7 @@ class COCODataset(JointsDataset):
 
 			center, scale = self._box2cs(box)
 			joints_3d = np.zeros((self.num_joints, 3), dtype=np.float)
-			joints_3d_vis = np.ones(
-				(self.num_joints, 3), dtype=np.float)
+			joints_3d_vis = np.ones((self.num_joints, 3), dtype=np.float)
 			kpt_db.append({
 				'image': img_name,
 				'center': center,
@@ -283,8 +288,7 @@ class COCODataset(JointsDataset):
 				'joints_3d_vis': joints_3d_vis,
 			})
 
-		logger.info('=> Total boxes after fliter low score@{}: {}'.format(
-			self.image_thre, num_boxes))
+		logger.info('=> Total boxes after fliter low score@{}: {}'.format(self.image_thre, num_boxes))
 		return kpt_db
 
 	def evaluate(self, cfg, preds, output_dir, all_boxes, img_path,

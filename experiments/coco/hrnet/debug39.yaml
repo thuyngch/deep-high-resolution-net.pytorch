@@ -15,6 +15,7 @@ DATASET:
   DATASET: 'coco'
   DATA_FORMAT: jpg
   FLIP: true
+  MULTI_PERSON: true
   NUM_JOINTS_HALF_BODY: 8
   PROB_HALF_BODY: 0.3
   ROOT: '/home/cybercore/Workspace/dataset/coco'
