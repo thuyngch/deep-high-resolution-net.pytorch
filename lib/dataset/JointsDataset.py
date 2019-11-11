@@ -199,7 +199,6 @@ class JointsDataset(Dataset):
 		image_file = db_recs[0]['image']
 		filename = db_recs[0]['filename'] if 'filename' in db_recs[0] else ''
 		imgnum = db_recs[0]['imgnum'] if 'imgnum' in db_recs[0] else ''
-		print(image_file)
 
 		# Read image
 		if self.data_format == 'zip':
