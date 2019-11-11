@@ -277,6 +277,7 @@ class JointsDataset(Dataset):
 			'score': score
 		}
 
+		print(input.shape)
 		return input, target, target_weight, meta
 
 	def _get_cs(self, height, width):
