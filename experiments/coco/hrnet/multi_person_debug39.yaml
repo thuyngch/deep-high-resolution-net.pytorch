@@ -5,8 +5,8 @@ CUDNN:
   ENABLED: true
 DATA_DIR: ''
 GPUS: (0,1)
-OUTPUT_DIR: '/home/user/thuync/checkpoints/PoseHRNet'
-LOG_DIR: '/home/user/thuync/checkpoints/PoseHRNet/log'
+OUTPUT_DIR: '/home/cybercore/thuync/checkpoints/PoseHRNet'
+LOG_DIR: '/home/cybercore/thuync/checkpoints/PoseHRNet/log'
 WORKERS: 16
 PRINT_FREQ: 100
 
@@ -18,7 +18,7 @@ DATASET:
   MULTI_PERSON: true
   NUM_JOINTS_HALF_BODY: 8
   PROB_HALF_BODY: 0.3
-  ROOT: '/home/user/Workspace/dataset/coco'
+  ROOT: '/home/cybercore/Workspace/dataset/coco'
   ROT_FACTOR: 45
   SCALE_FACTOR: 0.35
   TEST_SET: 'val2017'
@@ -27,7 +27,7 @@ MODEL:
   INIT_WEIGHTS: true
   NAME: pose_hrnet
   NUM_JOINTS: 17
-  PRETRAINED: '/home/user/thuync/checkpoints/HRNet/imagenet/hrnet_w32-36af842e.pth'
+  PRETRAINED: '/home/cybercore/thuync/checkpoints/HRNet/imagenet/hrnet_w32-36af842e.pth'
   TARGET_TYPE: gaussian
   IMAGE_SIZE:
   - 512
@@ -109,7 +109,7 @@ TRAIN:
   NESTEROV: false
 TEST:
   BATCH_SIZE_PER_GPU: 32
-  COCO_BBOX_FILE: '/home/user/Workspace/dataset/coco/COCO_val2017_detections_AP_H_56_person.json'
+  COCO_BBOX_FILE: '/home/cybercore/Workspace/dataset/coco/COCO_val2017_detections_AP_H_56_person.json'
   BBOX_THRE: 1.0
   IMAGE_THRE: 0.0
   IN_VIS_THRE: 0.2
