@@ -227,9 +227,9 @@ class COCODataset(JointsDataset):
 			h = w * 1.0 / self.aspect_ratio
 		elif w < self.aspect_ratio * h:
 			w = h * self.aspect_ratio
-		scale = np.array(
-			[w * 1.0 / self.pixel_std, h * 1.0 / self.pixel_std],
-			dtype=np.float32)
+
+		scale = np.array([w * 1.0 / self.pixel_std, h * 1.0 / self.pixel_std], "float32")
+
 		if center[0] != -1:
 			scale = scale * 1.25
 

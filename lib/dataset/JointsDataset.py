@@ -193,6 +193,7 @@ class JointsDataset(Dataset):
 
 	def _getitem_multi_person(self, idx):
 		db_recs = copy.deepcopy(self.db[idx])
+		print("db_recs:", len(db_recs))
 
 		# Get paths
 		image_file = db_recs[0]['image']
@@ -221,49 +222,52 @@ class JointsDataset(Dataset):
 		# Get joints
 		multi_joints = []
 		multi_joints_vis = []
+		print("Number of db_recs:", len(db_recs))
 		for db_rec in db_recs:
 
 			joints = db_rec['joints_3d']
 			joints_vis = db_rec['joints_3d_vis']
-
-			c = db_rec['center']
-			s = db_rec['scale']
-			score = db_rec['score'] if 'score' in db_rec else 1
-			r = 0
+			print("joints:", joints.shape, "joints_3d_vis:", joints_vis.shape)
 
 			if self.is_train and do_flip:
 				joints, joints_vis = fliplr_joints(joints, joints_vis, data_numpy.shape[1], self.flip_pairs)
-				c[0] = data_numpy.shape[1] - c[0] - 1
 
 			multi_joints.append(joints)
 			multi_joints_vis.append(joints_vis)
 
-		trans = get_affine_transform(c, s, r, self.image_size)
+		# Affine transform image
+		r = 0; score = 1.0
+		c, s = self._get_cs(data_numpy.shape[0], data_numpy.shape[1])
+		trans = get_affine_transform(center=c, scale=s, rot=r, output_size=self.image_size, pixel_std=self.pixel_std)
 		input = cv2.warpAffine(data_numpy, trans, (int(self.image_size[0]), int(self.image_size[1])), flags=cv2.INTER_LINEAR)
 
-		if self.transform:
-			input = self.transform(input)
-
+		# Affine transform joints
 		_multi_joints = []
 		for joints, joints_vis in zip(multi_joints, multi_joints_vis):
 			for i in range(self.num_joints):
 				if joints_vis[i, 0] > 0.0:
-					joints[i, 0:2] = affine_transform(joints[i, 0:2], trans)
-				_multi_joints.append(joints)
+					joints[i, :2] = affine_transform(joints[i, :2], trans)
+			_multi_joints.append(joints)
 		multi_joints = _multi_joints
 
+		# Transform image
+		if self.transform:
+			input = self.transform(input)
+
+		# Generate heatmaps from joints
 		targets, target_weights = [], []
 		for joints, joints_vis in zip(multi_joints, multi_joints_vis):
 			target, target_weight = self.generate_target(joints, joints_vis)
 			targets.append(target)
 			target_weights.append(target_weight)
 
-		target = np.array(targets).sum(axis=0).clip(0.0, 1.0)
-		target_weight = np.array(target_weights).sum(axis=0).clip(0.0, 1.0)
+		target = np.array(targets, 'float32').max(axis=0)
+		target_weight = np.array(target_weights, 'float32').max(axis=0)
 
 		target = torch.from_numpy(target)
 		target_weight = torch.from_numpy(target_weight)
 
+		# Meta
 		meta = {
 			'image': image_file,
 			'filename': filename,
@@ -277,6 +281,11 @@ class JointsDataset(Dataset):
 		}
 
 		return input, target, target_weight, meta
+
+	def _get_cs(self, height, width):
+		center = np.array([width/2, height/2], "float32")
+		scale = np.array([self.image_size[0]/self.pixel_std, self.image_size[1]/self.pixel_std], 'float32')
+		return center, scale
 
 	def select_data(self, db):
 		db_selected = []
@@ -317,13 +326,13 @@ class JointsDataset(Dataset):
 		:param joints_vis: [num_joints, 3]
 		:return: target, target_weight(1: visible, 0: invisible)
 		'''
-		target_weight = np.ones((self.num_joints, 1), dtype=np.float32)
-		target_weight[:, 0] = joints_vis[:, 0]
-
 		assert self.target_type == 'gaussian', 'Only support gaussian map now!'
 
+		target_weight = np.ones((self.num_joints, 1), 'float32')
+		target_weight[:, 0] = joints_vis[:, 0]
+
 		if self.target_type == 'gaussian':
-			target = np.zeros((self.num_joints, self.heatmap_size[1], self.heatmap_size[0]), dtype=np.float32)
+			target = np.zeros((self.num_joints, self.heatmap_size[1], self.heatmap_size[0]), 'float32')
 			tmp_size = self.sigma * 3
 
 			for joint_id in range(self.num_joints):
@@ -339,17 +348,19 @@ class JointsDataset(Dataset):
 					target_weight[joint_id] = 0
 					continue
 
-				# # Generate gaussian
+				# Generate gaussian
 				size = 2 * tmp_size + 1
-				x = np.arange(0, size, 1, np.float32)
+				x = np.arange(0, size, dtype='float32')
 				y = x[:, np.newaxis]
-				x0 = y0 = size // 2
+				x0 = y0 = float(size // 2)
 				# The gaussian is not normalized, we want the center value to equal 1
 				g = np.exp(- ((x - x0) ** 2 + (y - y0) ** 2) / (2 * self.sigma ** 2))
+				g = g.astype('float32')
 
 				# Usable gaussian range
 				g_x = max(0, -ul[0]), min(br[0], self.heatmap_size[0]) - ul[0]
 				g_y = max(0, -ul[1]), min(br[1], self.heatmap_size[1]) - ul[1]
+
 				# Image range
 				img_x = max(0, ul[0]), min(br[0], self.heatmap_size[0])
 				img_y = max(0, ul[1]), min(br[1], self.heatmap_size[1])

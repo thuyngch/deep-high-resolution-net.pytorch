@@ -42,14 +42,16 @@ def draw_heatmaps(image, heatmaps):
 	"""
 	# Resize heatmaps to image
 	H, W = image.shape[:2]
-	heatmaps = (255.0 * heatmaps).astype('uint8')
 	heatmaps = cv2.resize(heatmaps, (W,H), interpolation=cv2.INTER_LINEAR)
 	heatmaps = heatmaps.transpose((2,0,1))
 
 	# Overlay
 	_image = image.copy()
 	overlay = np.zeros_like(_image)
+
 	for idx, heatmap in enumerate(heatmaps):
 		overlay[heatmap>0, :] = _COLORS[idx]
+
+	overlay = overlay.astype('uint8')
 	overlaid_image = cv2.add(image, overlay)
 	return overlaid_image
