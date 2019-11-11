@@ -193,7 +193,6 @@ class JointsDataset(Dataset):
 
 	def _getitem_multi_person(self, idx):
 		db_recs = copy.deepcopy(self.db[idx])
-		print("db_recs:", len(db_recs))
 
 		# Get paths
 		image_file = db_recs[0]['image']
@@ -226,7 +225,6 @@ class JointsDataset(Dataset):
 
 			joints = db_rec['joints_3d']
 			joints_vis = db_rec['joints_3d_vis']
-			print("joints:", joints.shape, "joints_3d_vis:", joints_vis.shape)
 
 			if self.is_train and do_flip:
 				joints, joints_vis = fliplr_joints(joints, joints_vis, data_numpy.shape[1], self.flip_pairs)
