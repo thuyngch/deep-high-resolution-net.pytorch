@@ -199,6 +199,7 @@ class JointsDataset(Dataset):
 		image_file = db_recs[0]['image']
 		filename = db_recs[0]['filename'] if 'filename' in db_recs[0] else ''
 		imgnum = db_recs[0]['imgnum'] if 'imgnum' in db_recs[0] else ''
+		print(image_file)
 
 		# Read image
 		if self.data_format == 'zip':
@@ -222,7 +223,6 @@ class JointsDataset(Dataset):
 		# Get joints
 		multi_joints = []
 		multi_joints_vis = []
-		print("Number of db_recs:", len(db_recs))
 		for db_rec in db_recs:
 
 			joints = db_rec['joints_3d']
