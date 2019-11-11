@@ -1,2 +1,2 @@
 python tools/train.py \
-	--cfg experiments/coco/hrnet/debug.yaml
+	--cfg experiments/coco/hrnet/multi_person.yaml
