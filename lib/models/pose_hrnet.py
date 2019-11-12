@@ -108,11 +108,9 @@ class Bottleneck(nn.Module):
 #  HighResolutionModule
 #------------------------------------------------------------------------------
 class HighResolutionModule(nn.Module):
-	def __init__(self, num_branches, blocks, num_blocks, num_inchannels,
-				 num_channels, fuse_method, multi_scale_output=True):
+	def __init__(self, num_branches, blocks, num_blocks, num_inchannels, num_channels, fuse_method, multi_scale_output=True):
 		super(HighResolutionModule, self).__init__()
-		self._check_branches(
-			num_branches, blocks, num_blocks, num_inchannels, num_channels)
+		self._check_branches(num_branches, blocks, num_blocks, num_inchannels, num_channels)
 
 		self.num_inchannels = num_inchannels
 		self.fuse_method = fuse_method
@@ -120,77 +118,46 @@ class HighResolutionModule(nn.Module):
 
 		self.multi_scale_output = multi_scale_output
 
-		self.branches = self._make_branches(
-			num_branches, blocks, num_blocks, num_channels)
+		self.branches = self._make_branches(num_branches, blocks, num_blocks, num_channels)
 		self.fuse_layers = self._make_fuse_layers()
 		self.relu = nn.ReLU(True)
 
-	def _check_branches(self, num_branches, blocks, num_blocks,
-						num_inchannels, num_channels):
+	def _check_branches(self, num_branches, blocks, num_blocks, num_inchannels, num_channels):
 		if num_branches != len(num_blocks):
-			error_msg = 'NUM_BRANCHES({}) <> NUM_BLOCKS({})'.format(
-				num_branches, len(num_blocks))
+			error_msg = 'NUM_BRANCHES({}) <> NUM_BLOCKS({})'.format(num_branches, len(num_blocks))
 			logger.error(error_msg)
 			raise ValueError(error_msg)
 
 		if num_branches != len(num_channels):
-			error_msg = 'NUM_BRANCHES({}) <> NUM_CHANNELS({})'.format(
-				num_branches, len(num_channels))
+			error_msg = 'NUM_BRANCHES({}) <> NUM_CHANNELS({})'.format(num_branches, len(num_channels))
 			logger.error(error_msg)
 			raise ValueError(error_msg)
 
 		if num_branches != len(num_inchannels):
-			error_msg = 'NUM_BRANCHES({}) <> NUM_INCHANNELS({})'.format(
-				num_branches, len(num_inchannels))
+			error_msg = 'NUM_BRANCHES({}) <> NUM_INCHANNELS({})'.format(num_branches, len(num_inchannels))
 			logger.error(error_msg)
 			raise ValueError(error_msg)
 
-	def _make_one_branch(self, branch_index, block, num_blocks, num_channels,
-						 stride=1):
+	def _make_one_branch(self, branch_index, block, num_blocks, num_channels, stride=1):
 		downsample = None
-		if stride != 1 or \
-		   self.num_inchannels[branch_index] != num_channels[branch_index] * block.expansion:
+		if stride != 1 or self.num_inchannels[branch_index] != num_channels[branch_index] * block.expansion:
 			downsample = nn.Sequential(
-				nn.Conv2d(
-					self.num_inchannels[branch_index],
-					num_channels[branch_index] * block.expansion,
-					kernel_size=1, stride=stride, bias=False
-				),
-				nn.BatchNorm2d(
-					num_channels[branch_index] * block.expansion,
-					momentum=BN_MOMENTUM
-				),
+				nn.Conv2d(self.num_inchannels[branch_index], num_channels[branch_index] * block.expansion, kernel_size=1, stride=stride, bias=False),
+				nn.BatchNorm2d(num_channels[branch_index] * block.expansion, momentum=BN_MOMENTUM),
 			)
 
 		layers = []
-		layers.append(
-			block(
-				self.num_inchannels[branch_index],
-				num_channels[branch_index],
-				stride,
-				downsample
-			)
-		)
-		self.num_inchannels[branch_index] = \
-			num_channels[branch_index] * block.expansion
+		layers.append(block(self.num_inchannels[branch_index], num_channels[branch_index], stride, downsample))
+		self.num_inchannels[branch_index] = num_channels[branch_index] * block.expansion
 		for i in range(1, num_blocks[branch_index]):
-			layers.append(
-				block(
-					self.num_inchannels[branch_index],
-					num_channels[branch_index]
-				)
-			)
+			layers.append(block(self.num_inchannels[branch_index], num_channels[branch_index]))
 
 		return nn.Sequential(*layers)
 
 	def _make_branches(self, num_branches, block, num_blocks, num_channels):
 		branches = []
-
 		for i in range(num_branches):
-			branches.append(
-				self._make_one_branch(i, block, num_blocks, num_channels)
-			)
-
+			branches.append(self._make_one_branch(i, block, num_blocks, num_channels))
 		return nn.ModuleList(branches)
 
 	def _make_fuse_layers(self):
@@ -236,11 +203,7 @@ class HighResolutionModule(nn.Module):
 							num_outchannels_conv3x3 = num_inchannels[j]
 							conv3x3s.append(
 								nn.Sequential(
-									nn.Conv2d(
-										num_inchannels[j],
-										num_outchannels_conv3x3,
-										3, 2, 1, bias=False
-									),
+									nn.Conv2d(num_inchannels[j], num_outchannels_conv3x3, 3, 2, 1, bias=False),
 									nn.BatchNorm2d(num_outchannels_conv3x3),
 									nn.ReLU(True)
 								)
@@ -402,15 +365,9 @@ class PoseHighResolutionNet(nn.Module):
 
 			modules.append(
 				HighResolutionModule(
-					num_branches,
-					block,
-					num_blocks,
-					num_inchannels,
-					num_channels,
-					fuse_method,
-					reset_multi_scale_output
-				)
-			)
+					num_branches, block, num_blocks, num_inchannels,
+					num_channels, fuse_method, reset_multi_scale_output,
+			))
 			num_inchannels = modules[-1].get_num_inchannels()
 
 		return nn.Sequential(*modules), num_inchannels
