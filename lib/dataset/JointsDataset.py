@@ -237,7 +237,7 @@ class JointsDataset(Dataset):
 		c, s = self._get_cs(data_numpy.shape[0], data_numpy.shape[1])
 		trans = get_affine_transform(center=c, scale=s, rot=r, output_size=self.image_size, pixel_std=self.pixel_std)
 		input = cv2.warpAffine(data_numpy, trans, (int(self.image_size[0]), int(self.image_size[1])), flags=cv2.INTER_LINEAR)
-		# input = input.astype('float32')
+		input = input.astype('float32').transpose((2,0,1))
 
 		# Affine transform joints
 		_multi_joints = []
