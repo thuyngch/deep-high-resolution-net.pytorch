@@ -38,20 +38,25 @@ _COLORS = [
 def draw_heatmaps(image, heatmaps):
 	"""
 	image (np.uint8) shape [H,W,3] with RGB format
-	heatmaps (np.float32) shape [h,w,N] in range [0,1]
+	heatmaps (np.float32) shape [N,h,w] in range [0,1]
 	"""
 	# Resize heatmaps to image
 	H, W = image.shape[:2]
+	heatmaps = heatmaps.transpose((1,2,0))
 	heatmaps = cv2.resize(heatmaps, (W,H), interpolation=cv2.INTER_LINEAR)
 	heatmaps = heatmaps.transpose((2,0,1))
 
 	# Overlay
+	overlays = []
 	_image = image.copy()
-	overlay = np.zeros_like(_image)
 
 	for idx, heatmap in enumerate(heatmaps):
-		overlay[heatmap>0, :] = _COLORS[idx]
+		indicator = heatmap > 0
+		overlay = np.zeros_like(_image).astype('float32')
+		overlay[indicator, :] = _COLORS[idx]
+		overlay[indicator, :] *= heatmap[indicator][:,None]
+		overlays.append(overlay)
 
-	overlay = overlay.astype('uint8')
+	overlay = np.max(np.array(overlays), axis=0).astype('uint8')
 	overlaid_image = cv2.add(image, overlay)
 	return overlaid_image
