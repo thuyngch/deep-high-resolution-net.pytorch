@@ -480,7 +480,7 @@ class PoseHighResolutionNet(nn.Module):
 class PoseHigherResolutionNet(PoseHighResolutionNet):
 
 	def __init__(self, cfg, **kwargs):
-		super(PoseHigherResolutionNet, self).__init__()
+		super(PoseHigherResolutionNet, self).__init__(cfg)
 		self.inplanes = 64
 		extra = cfg.MODEL.EXTRA
 		self.pretrained_layers = cfg['MODEL']['EXTRA']['PRETRAINED_LAYERS']
@@ -528,14 +528,14 @@ class PoseHigherResolutionNet(PoseHighResolutionNet):
 		pre_stage_channels = [out_channels * block.expansion]
 
 		# Final layer
-		self.final_layer1 = nn.Conv2d(
+		self.final_layer = nn.Conv2d(
 			in_channels=pre_stage_channels[0],
 			out_channels=cfg.MODEL.NUM_JOINTS,
 			kernel_size=extra.FINAL_CONV_KERNEL,
 			stride=1,
 			padding=1 if extra.FINAL_CONV_KERNEL == 3 else 0
 		)
-		self.final_layer2 = nn.Conv2d(
+		self.final_layer_sub = nn.Conv2d(
 			in_channels=pre_stage_channels[0],
 			out_channels=cfg.MODEL.NUM_JOINTS,
 			kernel_size=extra.FINAL_CONV_KERNEL,
@@ -587,8 +587,8 @@ class PoseHigherResolutionNet(PoseHighResolutionNet):
 		y_list = self.deconv(y_list[0])
 
 		# Final
-		x_half = self.final_layer1(y_list[0])
-		x_quarter = self.final_layer2(y_list[1])
+		x_half = self.final_layer(y_list[0])
+		x_quarter = self.final_layer_sub(y_list[1])
 		return x_half, x_quarter
 
 
