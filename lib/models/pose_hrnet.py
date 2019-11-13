@@ -114,6 +114,7 @@ class DeconvolutionModule(nn.Module):
 		super(DeconvolutionModule, self).__init__()
 
 		# Pre-deconvolution
+		downsample = None
 		out_channels = out_channels * block.expansion
 		if in_channels != out_channels:
 			downsample = nn.Sequential(
