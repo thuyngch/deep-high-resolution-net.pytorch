@@ -24,8 +24,7 @@ from utils.vis import save_debug_images
 logger = logging.getLogger(__name__)
 
 
-def train(config, train_loader, model, criterion, optimizer, epoch,
-          output_dir, tb_log_dir, writer_dict):
+def train(config, train_loader, model, criterion, optimizer, epoch, output_dir, tb_log_dir, writer_dict):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -49,6 +48,7 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
             loss = criterion(outputs[0], target, target_weight)
             for output in outputs[1:]:
                 loss += criterion(output, target, target_weight)
+            output = outputs[0]
         else:
             output = outputs
             loss = criterion(output, target, target_weight)
@@ -63,8 +63,7 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
         # measure accuracy and record loss
         losses.update(loss.item(), input.size(0))
 
-        _, avg_acc, cnt, pred = accuracy(output.detach().cpu().numpy(),
-                                         target.detach().cpu().numpy())
+        _, avg_acc, cnt, pred = accuracy(output.detach().cpu().numpy(), target.detach().cpu().numpy())
         acc.update(avg_acc, cnt)
 
         # measure elapsed time
@@ -90,8 +89,7 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
             writer_dict['train_global_steps'] = global_steps + 1
 
             prefix = '{}_{}'.format(os.path.join(output_dir, 'train'), i)
-            save_debug_images(config, input, meta, target, pred*4, output,
-                              prefix)
+            save_debug_images(config, input, meta, target, pred*4, output, prefix)
 
 
 def validate(config, val_loader, val_dataset, model, criterion, output_dir,

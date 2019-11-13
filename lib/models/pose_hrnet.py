@@ -100,13 +100,56 @@ class Bottleneck(nn.Module):
 		return out
 
 
-#------------------------------------------------------------------------------
-#  blocks_dict
-#------------------------------------------------------------------------------
 blocks_dict = {
 	'BASIC': BasicBlock,
 	'BOTTLENECK': Bottleneck,
 }
+
+
+#------------------------------------------------------------------------------
+#  DeconvolutionModule
+#------------------------------------------------------------------------------
+class DeconvolutionModule(nn.Module):
+	def __init__(self, in_channels, out_channels, block):
+		super(DeconvolutionModule, self).__init__()
+
+		# Pre-deconvolution
+		out_channels = out_channels * block.expansion
+		if in_channels != out_channels:
+			downsample = nn.Sequential(
+				nn.Conv2d(in_channels, out_channels, 1, bias=False),
+				nn.BatchNorm2d(out_channels, momentum=BN_MOMENTUM),
+			)
+		self.predeconv1 = block(in_channels, out_channels, downsample=downsample)
+		self.predeconv2 = block(out_channels, out_channels)
+
+		# Deconvolution
+		self.deconv = nn.Sequential(
+			nn.ConvTranspose2d(2*out_channels, out_channels, kernel_size=4, stride=2, bias=False),
+			nn.BatchNorm2d(out_channels, momentum=BN_MOMENTUM),
+			nn.ReLU(True),
+		)
+
+		# Post-deconvolution
+		postdeconv = []
+		for _ in range(4):
+			postdeconv.append(block(out_channels, out_channels))
+		self.postdeconv = nn.Sequential(*postdeconv)
+
+	def forward(self, x):
+		# Pre-deconvolution
+		predeconv1 = self.predeconv1(x)
+		predeconv2 = self.predeconv1(predeconv1)
+
+		# Deconvolution
+		predeconv = torch.cat([predeconv1, predeconv2], dim=1)
+		deconv = self.deconv(predeconv)
+
+		# Post-deconvolution
+		postdeconv = self.postdeconv(deconv)
+
+		return postdeconv, predeconv2
+
 
 
 #------------------------------------------------------------------------------
@@ -437,9 +480,10 @@ class PoseHighResolutionNet(nn.Module):
 class PoseHigherResolutionNet(PoseHighResolutionNet):
 
 	def __init__(self, cfg, **kwargs):
+		super(PoseHigherResolutionNet, self).__init__()
 		self.inplanes = 64
 		extra = cfg.MODEL.EXTRA
-		super(PoseHigherResolutionNet, self).__init__()
+		self.pretrained_layers = cfg['MODEL']['EXTRA']['PRETRAINED_LAYERS']
 
 		# Stem net
 		self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False)
@@ -475,10 +519,23 @@ class PoseHigherResolutionNet(PoseHighResolutionNet):
 		num_channels = [num_channels[i] * block.expansion for i in range(len(num_channels))]
 		self.transition3 = self._make_transition_layer(pre_stage_channels, num_channels)
 		self.stage4, pre_stage_channels = self._make_stage(self.stage4_cfg, num_channels, multi_scale_output=False)
-		print(pre_stage_channels[0])
+
+		# Deconvolution module
+		block = BasicBlock
+		in_channels = pre_stage_channels[0]
+		out_channels = pre_stage_channels[0]
+		self.deconv = DeconvolutionModule(in_channels, out_channels, block=block)
+		pre_stage_channels = [out_channels * block.expansion]
 
 		# Final layer
-		self.final_layer = nn.Conv2d(
+		self.final_layer1 = nn.Conv2d(
+			in_channels=pre_stage_channels[0],
+			out_channels=cfg.MODEL.NUM_JOINTS,
+			kernel_size=extra.FINAL_CONV_KERNEL,
+			stride=1,
+			padding=1 if extra.FINAL_CONV_KERNEL == 3 else 0
+		)
+		self.final_layer2 = nn.Conv2d(
 			in_channels=pre_stage_channels[0],
 			out_channels=cfg.MODEL.NUM_JOINTS,
 			kernel_size=extra.FINAL_CONV_KERNEL,
@@ -486,7 +543,6 @@ class PoseHigherResolutionNet(PoseHighResolutionNet):
 			padding=1 if extra.FINAL_CONV_KERNEL == 3 else 0
 		)
 
-		self.pretrained_layers = cfg['MODEL']['EXTRA']['PRETRAINED_LAYERS']
 
 	def forward(self, x):
 		# Stem
@@ -527,16 +583,21 @@ class PoseHigherResolutionNet(PoseHighResolutionNet):
 				x_list.append(y_list[i])
 		y_list = self.stage4(x_list)
 
+		# Deconvolution
+		y_list = self.deconv(y_list[0])
+
 		# Final
-		x = self.final_layer(y_list[0])
-		return x
+		x_half = self.final_layer1(y_list[0])
+		x_quarter = self.final_layer2(y_list[1])
+		return x_half, x_quarter
 
 
 #------------------------------------------------------------------------------
 #  get_pose_net
 #------------------------------------------------------------------------------
 def get_pose_net(cfg, is_train, **kwargs):
-	model = PoseHighResolutionNet(cfg, **kwargs)
+	# model = PoseHighResolutionNet(cfg, **kwargs)
+	model = PoseHigherResolutionNet(cfg, **kwargs)
 
 	if is_train and cfg.MODEL.INIT_WEIGHTS:
 		model.init_weights(cfg.MODEL.PRETRAINED)
