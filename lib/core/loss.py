@@ -22,11 +22,12 @@ class JointsMSELoss(nn.Module):
 		self.use_target_weight = use_target_weight
 
 	def forward(self, output, target, target_weight):
-		# Resize output to match target size
-		h, w = output.shape[-2:]
-		H, W = target.shape[-2:]
-		if (h!=H) or (w!=W):
-			output = F.interpolate(output, size=(H,W), mode='bilinear', align_corners=True)
+		# Resize target to match output size
+		with torch.no_grad():
+			h, w = output.shape[-2:]
+			H, W = target.shape[-2:]
+			if (h!=H) or (w!=W):
+				target = F.interpolate(target, size=(h,w), mode='bilinear', align_corners=True)
 
 		# Reshape
 		batch_size = output.shape[0]
