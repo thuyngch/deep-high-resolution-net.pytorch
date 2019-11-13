@@ -3,26 +3,23 @@
 # Licensed under the MIT License.
 # Written by Bin Xiao (Bin.Xiao@microsoft.com)
 # ------------------------------------------------------------------------------
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import logging
-
-import torch
+import os, logging, torch
 import torch.nn as nn
 
 
+#------------------------------------------------------------------------------
+#  Utils
+#------------------------------------------------------------------------------
 BN_MOMENTUM = 0.1
 logger = logging.getLogger(__name__)
 
 
 def conv3x3(in_planes, out_planes, stride=1):
-	"""3x3 convolution with padding"""
-	return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-					 padding=1, bias=False)
+	return nn.Conv2d(in_planes, out_planes, 3, stride=stride, padding=1, bias=False)
 
 
 #------------------------------------------------------------------------------
@@ -68,15 +65,15 @@ class Bottleneck(nn.Module):
 
 	def __init__(self, inplanes, planes, stride=1, downsample=None):
 		super(Bottleneck, self).__init__()
-		self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
+		self.conv1 = nn.Conv2d(inplanes, planes, 1, bias=False)
 		self.bn1 = nn.BatchNorm2d(planes, momentum=BN_MOMENTUM)
-		self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
-							   padding=1, bias=False)
+
+		self.conv2 = nn.Conv2d(planes, planes, 3, stride=stride, padding=1, bias=False)
 		self.bn2 = nn.BatchNorm2d(planes, momentum=BN_MOMENTUM)
-		self.conv3 = nn.Conv2d(planes, planes * self.expansion, kernel_size=1,
-							   bias=False)
-		self.bn3 = nn.BatchNorm2d(planes * self.expansion,
-								  momentum=BN_MOMENTUM)
+
+		self.conv3 = nn.Conv2d(planes, planes * self.expansion, 1, bias=False)
+		self.bn3 = nn.BatchNorm2d(planes * self.expansion, momentum=BN_MOMENTUM)
+		
 		self.relu = nn.ReLU(inplace=True)
 		self.downsample = downsample
 		self.stride = stride
@@ -100,7 +97,6 @@ class Bottleneck(nn.Module):
 
 		out += residual
 		out = self.relu(out)
-
 		return out
 
 
@@ -142,7 +138,7 @@ class HighResolutionModule(nn.Module):
 		downsample = None
 		if stride != 1 or self.num_inchannels[branch_index] != num_channels[branch_index] * block.expansion:
 			downsample = nn.Sequential(
-				nn.Conv2d(self.num_inchannels[branch_index], num_channels[branch_index] * block.expansion, kernel_size=1, stride=stride, bias=False),
+				nn.Conv2d(self.num_inchannels[branch_index], num_channels[branch_index] * block.expansion, 1, stride=stride, bias=False),
 				nn.BatchNorm2d(num_channels[branch_index] * block.expansion, momentum=BN_MOMENTUM),
 			)
 
@@ -373,14 +369,18 @@ class PoseHighResolutionNet(nn.Module):
 		return nn.Sequential(*modules), num_inchannels
 
 	def forward(self, x):
+		# Stem
 		x = self.conv1(x)
 		x = self.bn1(x)
 		x = self.relu(x)
 		x = self.conv2(x)
 		x = self.bn2(x)
 		x = self.relu(x)
+
+		# Stage1
 		x = self.layer1(x)
 
+		# State2
 		x_list = []
 		for i in range(self.stage2_cfg['NUM_BRANCHES']):
 			if self.transition1[i] is not None:
@@ -389,6 +389,7 @@ class PoseHighResolutionNet(nn.Module):
 				x_list.append(x)
 		y_list = self.stage2(x_list)
 
+		# State3
 		x_list = []
 		for i in range(self.stage3_cfg['NUM_BRANCHES']):
 			if self.transition2[i] is not None:
@@ -397,6 +398,7 @@ class PoseHighResolutionNet(nn.Module):
 				x_list.append(y_list[i])
 		y_list = self.stage3(x_list)
 
+		# State4
 		x_list = []
 		for i in range(self.stage4_cfg['NUM_BRANCHES']):
 			if self.transition3[i] is not None:
@@ -405,8 +407,8 @@ class PoseHighResolutionNet(nn.Module):
 				x_list.append(y_list[i])
 		y_list = self.stage4(x_list)
 
+		# Final
 		x = self.final_layer(y_list[0])
-
 		return x
 
 	def init_weights(self, pretrained=''):
