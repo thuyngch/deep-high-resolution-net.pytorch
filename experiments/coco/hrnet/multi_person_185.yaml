@@ -4,7 +4,7 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 DATA_DIR: ''
-GPUS: (0,1)
+GPUS: (0,1,2,3)
 OUTPUT_DIR: '/home/member/Workspace/thuync/checkpoints/PoseHRNet/log'
 LOG_DIR: '/home/member/Workspace/thuync/checkpoints/PoseHRNet/log'
 WORKERS: 24
@@ -102,7 +102,7 @@ TRAIN:
   LR_STEP:
   - 170
   - 200
-  WD: 0.0001
+  WD: 0.0002
   GAMMA1: 0.99
   GAMMA2: 0.0
   MOMENTUM: 0.9
