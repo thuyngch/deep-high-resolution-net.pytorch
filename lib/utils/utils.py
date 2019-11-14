@@ -132,6 +132,7 @@ def get_model_summary(model, *input_tensors, item_length=26, verbose=False):
                 input = input[0]
             if isinstance(output, list):
                 output = output[0][0]
+            print(type(input), type(output))
 
             summary.append(
                 ModuleDetails(
