@@ -113,8 +113,8 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir, tb_l
         for i, (input, target, target_weight, meta) in enumerate(val_loader):
             # compute output
             outputs = model(input)
-            if isinstance(outputs, list):
-                output = outputs[-1]
+            if isinstance(outputs, (list, tuple)):
+                output = outputs[0]
             else:
                 output = outputs
 
@@ -125,15 +125,13 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir, tb_l
                 input_flipped = torch.from_numpy(input_flipped).cuda()
                 outputs_flipped = model(input_flipped)
 
-                if isinstance(outputs_flipped, list):
-                    output_flipped = outputs_flipped[-1]
+                if isinstance(outputs_flipped, (list, tuple)):
+                    output_flipped = outputs_flipped[0]
                 else:
                     output_flipped = outputs_flipped
 
-                output_flipped = flip_back(output_flipped.cpu().numpy(),
-                                           val_dataset.flip_pairs)
+                output_flipped = flip_back(output_flipped.cpu().numpy(), val_dataset.flip_pairs)
                 output_flipped = torch.from_numpy(output_flipped.copy()).cuda()
-
 
                 # feature is not aligned, shift flipped heatmap for higher accuracy
                 if config.TEST.SHIFT_HEATMAP:
