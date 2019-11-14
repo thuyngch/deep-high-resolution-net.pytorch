@@ -115,21 +115,18 @@ def get_model_summary(model, *input_tensors, item_length=26, verbose=False):
 
             params = 0
 
-            if class_name.find("Conv") != -1 or class_name.find("BatchNorm") != -1 or \
-               class_name.find("Linear") != -1:
+            if class_name.find("Conv") != -1 or class_name.find("BatchNorm") != -1 or class_name.find("Linear") != -1:
                 for param_ in module.parameters():
                     params += param_.view(-1).size(0)
 
             flops = "Not Available"
             if class_name.find("Conv") != -1 and hasattr(module, "weight"):
                 flops = (
-                    torch.prod(
-                        torch.LongTensor(list(module.weight.data.size()))) *
-                    torch.prod(
-                        torch.LongTensor(list(output.size())[2:]))).item()
+                    torch.prod(torch.LongTensor(list(module.weight.data.size()))) *
+                    torch.prod(torch.LongTensor(list(output.size())[2:]))
+                ).item()
             elif isinstance(module, nn.Linear):
-                flops = (torch.prod(torch.LongTensor(list(output.size()))) \
-                         * input[0].size(1)).item()
+                flops = (torch.prod(torch.LongTensor(list(output.size()))) * input[0].size(1)).item()
 
             if isinstance(input[0], list):
                 input = input[0]
@@ -145,9 +142,7 @@ def get_model_summary(model, *input_tensors, item_length=26, verbose=False):
                     multiply_adds=flops)
             )
 
-        if not isinstance(module, nn.ModuleList) \
-           and not isinstance(module, nn.Sequential) \
-           and module != model:
+        if not isinstance(module, nn.ModuleList) and not isinstance(module, nn.Sequential) and module != model:
             hooks.append(module.register_forward_hook(hook))
 
     model.eval()
