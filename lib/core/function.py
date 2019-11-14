@@ -90,8 +90,7 @@ def train(config, train_loader, model, criterion, optimizer, epoch, output_dir, 
             save_debug_images(config, input, meta, target, pred*4, output, prefix)
 
 
-def validate(config, val_loader, val_dataset, model, criterion, output_dir,
-             tb_log_dir, writer_dict=None):
+def validate(config, val_loader, val_dataset, model, criterion, output_dir, tb_log_dir, writer_dict=None):
     batch_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
@@ -138,8 +137,7 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
 
                 # feature is not aligned, shift flipped heatmap for higher accuracy
                 if config.TEST.SHIFT_HEATMAP:
-                    output_flipped[:, :, :, 1:] = \
-                        output_flipped.clone()[:, :, :, 0:-1]
+                    output_flipped[:, :, :, 1:] = output_flipped.clone()[:, :, :, 0:-1]
 
                 output = (output + output_flipped) * 0.5
 
@@ -148,12 +146,10 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
 
             loss = criterion(output, target, target_weight)
 
-            num_images = input.size(0)
             # measure accuracy and record loss
+            num_images = input.size(0)
             losses.update(loss.item(), num_images)
-            _, avg_acc, cnt, pred = accuracy(output.cpu().numpy(),
-                                             target.cpu().numpy())
-
+            _, avg_acc, cnt, pred = accuracy(output.cpu().numpy(), target.cpu().numpy())
             acc.update(avg_acc, cnt)
 
             # measure elapsed time
